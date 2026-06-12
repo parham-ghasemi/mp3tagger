@@ -7,11 +7,10 @@ import (
 	removecommontokens "mp3tagger/removeCommonTokens"
 	"mp3tagger/scraper"
 	"mp3tagger/tagger"
+	tokencompare "mp3tagger/tokenCompare"
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/lithammer/fuzzysearch/fuzzy"
 )
 
 type Match struct {
@@ -23,7 +22,8 @@ type Match struct {
 func main() {
 	var geniusUrl = flag.String("genius-url", "", "The genius url, the tags will be fetched from.")
 	var directory = flag.String("directory", "", "The directory in which your MP3 files are located.")
-	var maxScore = flag.Int( "max-score", 40, "Maximum allowed Levenshtein distance")
+	var ignoreFreqPct = flag.Int("ignore-freq-pct", 60, "The maximum percentage of files a token can appear in; tokens exceeding this are ignored as too common")
+	var minMatchScore = flag.Int("min-match-score", 20, "The minimum confidence score required to accept a track match")
 
 	flag.Parse()
 
@@ -52,27 +52,27 @@ func main() {
 		}
 	}
 
-	cleanFiles := removecommontokens.RemoveCommonTokens(files)
+	cleanFiles := removecommontokens.RemoveCommonTokens(files, *ignoreFreqPct)
 
 	for index, file := range cleanFiles {
-		bestScore := 999999
+		bestScore := 0
 		var bestTrack scraper.Track
 
 		for _, track := range scrapeRes {
-			score := fuzzy.LevenshteinDistance(file, strings.ToLower(track.Title))
+			score := tokencompare.TokenCompare(file, strings.ToLower(track.Title))
 
-			if score < bestScore {
+			if score > bestScore {
 				bestScore = score
 				bestTrack = track
 			}
 		}
 
-		if bestScore > *maxScore {
+		if bestScore < *minMatchScore {
 			fmt.Println("\nSKIP (low confidence)")
 			fmt.Println("------")
 			fmt.Printf("Clean MP3 Name: %v \n", file)
 			fmt.Printf("MATCH NAME: %v \n", bestTrack.Title)
-			fmt.Printf("Score: %v \n", bestScore) 
+			fmt.Printf("Score: %v\n", bestScore) 
 
 			continue
 		}

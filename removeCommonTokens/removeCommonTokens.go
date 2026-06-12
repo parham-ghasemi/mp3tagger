@@ -35,7 +35,7 @@ func removeTokens(tokens []string, name string)string{
 	return strings.Join(result, " ")
 }
 
-func RemoveCommonTokens(files []string) []string{
+func RemoveCommonTokens(files []string, thresholdPercent int) []string{
 
 	counts := map[string]int {}
 
@@ -55,7 +55,7 @@ func RemoveCommonTokens(files []string) []string{
 
 	cTokens := []string{}
 	for key, val := range counts {
-		if val >= len(files)*90 / 100 {
+		if val >= len(files)*thresholdPercent / 100 {
 			cTokens = append(cTokens, key)
 		}
 	}

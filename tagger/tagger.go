@@ -15,10 +15,12 @@ func Tagger(filepath string, trackNum string, title string, artist string, album
 	}
 	defer tag.Close()
 
+	tag.SetDefaultEncoding(id3v2.EncodingUTF8)
+
 	tag.SetTitle(title)
 	tag.SetArtist(artist)
 	tag.SetAlbum(album)
-	tag.AddTextFrame(tag.CommonID("Track number/Position in set"), tag.DefaultEncoding(), trackNum)
+	tag.AddTextFrame(tag.CommonID("Track number/Position in set"), id3v2.EncodingUTF8, trackNum)
 
 	if err := tag.Save(); err!= nil {
 		fmt.Println("Error Saving ID3 Tags: ")
