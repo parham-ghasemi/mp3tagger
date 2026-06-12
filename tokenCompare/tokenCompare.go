@@ -1,20 +1,32 @@
 package tokencompare
 
+/*
+	[ ] Weighted tokens
+	[X] Normalize strings before matching
+*/
+
 import (
 	"slices"
 	"strings"
 )
 
-func TokenCompare(s1, s2 string) int {
-	s1t := strings.Fields(s1)
-	s2t := strings.Fields(s2)
+func Normalize(s string) string{
+	s = strings.ToLower((s))
 
-	common := []string{}
+	replacer := strings.NewReplacer( ".", "", ",", "", "(", "", ")", "", "-", " ",)
+
+	return replacer.Replace(s)
+}
+
+func TokenCompare(s1, s2 string) int {
+	s1t := strings.Fields(Normalize(s1))
+	s2t := strings.Fields(Normalize(s2))
+
+	common := map[string]bool{}
 
 	for _, token := range s1t {
 		if slices.Contains(s2t, token) {
-			// counts[token] = true
-			common = append(common, token)
+			common[token] = true
 		}
 	}
 

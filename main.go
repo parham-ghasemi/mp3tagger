@@ -59,7 +59,7 @@ func main() {
 		var bestTrack scraper.Track
 
 		for _, track := range scrapeRes {
-			score := tokencompare.TokenCompare(file, strings.ToLower(track.Title))
+			score := tokencompare.TokenCompare(file, track.Title)
 
 			if score > bestScore {
 				bestScore = score
