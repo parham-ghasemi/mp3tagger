@@ -20,29 +20,46 @@ type Match struct {
 
 
 func main() {
-	var geniusUrl = flag.String("genius-url", "", "The genius url, the tags will be fetched from.")
-	var directory = flag.String("directory", "", "The directory in which your MP3 files are located.")
-	var ignoreFreqPct = flag.Int("ignore-freq-pct", 60, "The maximum percentage of files a token can appear in; tokens exceeding this are ignored as too common")
-	var minMatchScore = flag.Int("min-match-score", 20, "The minimum confidence score required to accept a track match")
-	var dryRun = flag.Bool("dry-run", false, "If set, run without editing any tags")
+	var (
+		geniusUrl     string
+		directory     string
+		ignoreFreqPct int
+		minMatchScore int
+		dryRun        bool
+	)
+
+	flag.StringVar(&geniusUrl, "genius-url", "", "The Genius.com album URL containing the correct tracklist information")
+	flag.StringVar(&geniusUrl, "u", "", "The Genius.com album URL containing the correct tracklist information (shorthand)")
+
+	flag.StringVar(&directory, "directory", "", "Path to the local directory where your target MP3 files are stored")
+	flag.StringVar(&directory, "d", "", "Path to the local directory where your target MP3 files are stored (shorthand)")
+
+	flag.IntVar(&ignoreFreqPct, "ignore-freq-pct", 60, "Threshold percentage (0-100); tokens appearing in more than this % of files are filtered out as too common")
+	flag.IntVar(&ignoreFreqPct, "p", 60, "Threshold percentage (0-100); tokens appearing in more than this % of files are filtered out as too common (shorthand)")
+
+	flag.IntVar(&minMatchScore, "min-match-score", 20, "Minimum confidence score (0-100) required to automatically accept a track match")
+	flag.IntVar(&minMatchScore, "s", 20, "Minimum confidence score (0-100) required to automatically accept a track match (shorthand)")
+
+	flag.BoolVar(&dryRun, "dry-run", false, "Preview matching logic and print what changes would be made without modifying file tags")
+	flag.BoolVar(&dryRun, "n", false, "Preview matching logic and print what changes would be made without modifying file tags (shorthand)")
 
 	flag.Parse()
 
-	if *geniusUrl == "" || *directory == "" {
+	if geniusUrl == "" || directory == "" {
 		flag.Usage()
 		os.Exit(1)
 	}
 
 	fmt.Println("Starting app")
 
-	scrapeRes, err := scraper.ScrapePage(*geniusUrl)
+	scrapeRes, err := scraper.ScrapePage(geniusUrl)
 	if err != nil {
 		log.Fatalf("Failed to scrape page: %v", err)
 	}
 	fmt.Printf("Scrape result: %d tracks found\n", len(scrapeRes))
 
 
-	entries, err := os.ReadDir(*directory)
+	entries, err := os.ReadDir(directory)
 	if err != nil {
 		log.Fatalf("Failed to read directory: %v", err)
 	}
@@ -57,7 +74,7 @@ func main() {
 
 	fmt.Printf("Scanned %d directory entries; found %d MP3 files to process.\n", len(entries), len(files))
 
-	cleanFiles := removecommontokens.RemoveCommonTokens(files, *ignoreFreqPct)
+	cleanFiles := removecommontokens.RemoveCommonTokens(files, ignoreFreqPct)
 
 	for index, file := range cleanFiles {
 		bestScore := 0
@@ -72,15 +89,15 @@ func main() {
 			}
 		}
 
-		if bestScore < *minMatchScore {
-			fmt.Printf("\nSKIP: %s — low confidence (score= %d, min= %d). Best match: %s\n", file, bestScore, *minMatchScore, bestTrack.Title)
+		if bestScore < minMatchScore {
+			fmt.Printf("\nSKIP: %s — low confidence (score= %d, min= %d). Best match: %s\n", file, bestScore, minMatchScore, bestTrack.Title)
 			continue
 		}
 
 		fmt.Printf("\nMATCH: %s -> %s (score= %d)\n", file, bestTrack.Title, bestScore)
-		fileFullPath := filepath.Join(*directory, files[index])
+		fileFullPath := filepath.Join(directory, files[index])
 		fmt.Printf("Editing tags on %s\n", fileFullPath)
-		if *dryRun {
+		if dryRun {
 			log.Printf("Dry run: skipping tag edit for %s", fileFullPath)
 		} else {
 			if err := tagger.Tagger(fileFullPath, bestTrack.TrackNumber, bestTrack.Title, bestTrack.AlbumArtist, bestTrack.AlbumName); err != nil {
