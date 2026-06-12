@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bufio"
+	"flag"
 	"fmt"
 	"log"
 	removecommontokens "mp3tagger/removeCommonTokens"
@@ -19,33 +19,27 @@ type Match struct {
 	Score int32
 }
 
-func main() {
-	fmt.Println("Starting app...")
 
-	// Scrape the genius url
-	var genius_url string
-	scanner := bufio.NewScanner(os.Stdin)
-	fmt.Println("Enter Genius URL:")
-	scanner.Scan()
-	genius_url = scanner.Text()
-	if err := scanner.Err(); err != nil {
-		fmt.Fprint(os.Stderr, "reading standard input: ", err)
+func main() {
+	var geniusUrl = flag.String("genius-url", "", "The genius url, the tags will be fetched from.")
+	var directory = flag.String("directory", "", "The directory in which your MP3 files are located.")
+	var maxScore = flag.Int( "max-score", 40, "Maximum allowed Levenshtein distance")
+
+	flag.Parse()
+
+	if *geniusUrl == "" || *directory == "" {
+		flag.Usage()
+		os.Exit(1)
 	}
 
-	scrapeRes := scraper.ScrapePage(genius_url)
+	fmt.Println("Starting app...")
+
+	scrapeRes := scraper.ScrapePage(*geniusUrl)
 	fmt.Println("Scrape Result: ")
 	fmt.Println(scrapeRes)
 
 
-	// Loop through folder
-	var folder_path string
-	fmt.Println("Enter Folder URL:")
-	scanner.Scan()
-	folder_path = scanner.Text()
-	if err := scanner.Err(); err != nil {
-		fmt.Fprint(os.Stderr, "reading standard input: ", err)
-	}
-	entries, err := os.ReadDir(folder_path)
+	entries, err := os.ReadDir(*directory)
 	if err != nil {
 		log.Fatalf("Failed to read directory: %v", err)
 	}
@@ -73,9 +67,7 @@ func main() {
 			}
 		}
 
-		maxScore := 40
-
-		if bestScore > maxScore {
+		if bestScore > *maxScore {
 			fmt.Println("\nSKIP (low confidence)")
 			fmt.Println("------")
 			fmt.Printf("Clean MP3 Name: %v \n", file)
@@ -90,7 +82,7 @@ func main() {
 		fmt.Printf("Clean MP3 Name: %v \n", file)
 		fmt.Printf("MATCH NAME: %v \n", bestTrack.Title)
 		fmt.Printf("Score: %v \n", bestScore) 
-		fileFullPath := filepath.Join(folder_path, files[index]) 
+		fileFullPath := filepath.Join(*directory, files[index]) 
 		fmt.Println("Editing tag on file ", fileFullPath) 
 		tagger.Tagger(fileFullPath, bestTrack.TrackNumber, bestTrack.Title, bestTrack.AlbumArtist, bestTrack.AlbumName) 
 		fmt.Println("Tags edit success.")
