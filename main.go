@@ -34,7 +34,10 @@ func main() {
 
 	fmt.Println("Starting app...")
 
-	scrapeRes := scraper.ScrapePage(*geniusUrl)
+	scrapeRes, err := scraper.ScrapePage(*geniusUrl)
+	if err != nil {
+		log.Fatalf("Failed to scrape page: %v", err)
+	}
 	fmt.Println("Scrape Result: ")
 	fmt.Println(scrapeRes)
 
@@ -83,8 +86,10 @@ func main() {
 		fmt.Printf("MATCH NAME: %v \n", bestTrack.Title)
 		fmt.Printf("Score: %v \n", bestScore) 
 		fileFullPath := filepath.Join(*directory, files[index]) 
-		fmt.Println("Editing tag on file ", fileFullPath) 
-		tagger.Tagger(fileFullPath, bestTrack.TrackNumber, bestTrack.Title, bestTrack.AlbumArtist, bestTrack.AlbumName) 
+		fmt.Println("Editing tag on file ", fileFullPath)
+		if err := tagger.Tagger(fileFullPath, bestTrack.TrackNumber, bestTrack.Title, bestTrack.AlbumArtist, bestTrack.AlbumName); err != nil {
+			log.Fatalf("Failed to edit tags on %s: %v", fileFullPath, err)
+		}
 		fmt.Println("Tags edit success.")
 	}
 }
