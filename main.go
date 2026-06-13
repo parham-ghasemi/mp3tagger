@@ -35,7 +35,7 @@ func main() {
 	flag.StringVar(&directory, "d", "", "Path to the local directory where your target MP3 files are stored (shorthand)")
 
 	flag.IntVar(&ignoreFreqPct, "ignore-freq-pct", 60, "Threshold percentage (0-100); tokens appearing in more than this % of files are filtered out as too common")
-	flag.IntVar(&ignoreFreqPct, "p", 60, "Threshold percentage (0-100); tokens appearing in more than this % of files are filtered out as too common (shorthand)")
+	flag.IntVar(&ignoreFreqPct, "p", 60, "Threshold percentage (0-100); tokens appearing in at least this % of files are filtered out as too common (shorthand)")
 
 	flag.IntVar(&minMatchScore, "min-match-score", 20, "Minimum confidence score (0-100) required to automatically accept a track match")
 	flag.IntVar(&minMatchScore, "s", 20, "Minimum confidence score (0-100) required to automatically accept a track match (shorthand)")
@@ -76,6 +76,12 @@ func main() {
 
 	cleanFiles := removecommontokens.RemoveCommonTokens(files, ignoreFreqPct)
 
+	var (
+		matchedCount int
+		skippedCount int
+		errorCount   int
+	)
+
 	for index, file := range cleanFiles {
 		bestScore := 0
 		var bestTrack scraper.Track
@@ -91,20 +97,34 @@ func main() {
 
 		if bestScore < minMatchScore {
 			fmt.Printf("\nSKIP: %s — low confidence (score= %d, min= %d). Best match: %s\n", file, bestScore, minMatchScore, bestTrack.Title)
+			skippedCount++
 			continue
 		}
 
 		fmt.Printf("\nMATCH: %s -> %s (score= %d)\n", file, bestTrack.Title, bestScore)
 		fileFullPath := filepath.Join(directory, files[index])
 		fmt.Printf("Editing tags on %s\n", fileFullPath)
+		
 		if dryRun {
 			log.Printf("Dry run: skipping tag edit for %s", fileFullPath)
+			matchedCount++
 		} else {
 			if err := tagger.Tagger(fileFullPath, bestTrack.TrackNumber, bestTrack.Title, bestTrack.AlbumArtist, bestTrack.AlbumName); err != nil {
 				log.Printf("Failed to edit tags on %s: %v\n", fileFullPath, err)
+				errorCount++
+			} else {
+				log.Printf("Tags edit success: %s", fileFullPath)
+				matchedCount++
 			}
-			log.Printf("Tags edit success: %s", fileFullPath)
 		}
 	}
-}
 
+	fmt.Println("\n---------------------------------")
+	fmt.Println("         RUN SUMMARY             ")
+	fmt.Println("---------------------------------")
+	fmt.Printf("Processed: %d\n", len(files))
+	fmt.Printf("Matched:   %d\n", matchedCount)
+	fmt.Printf("Skipped:   %d\n", skippedCount)
+	fmt.Printf("Errors:    %d\n", errorCount)
+	fmt.Println("---------------------------------")
+}
