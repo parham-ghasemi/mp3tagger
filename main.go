@@ -18,13 +18,14 @@ type Match struct {
 	Score int32
 }
 
+
 func main() {
 	var (
-		geniusUrl     string
-		directory     string
+		geniusUrl string
+		directory string
 		ignoreFreqPct int
 		minMatchScore int
-		dryRun        bool
+		dryRun bool
 	)
 
 	flag.StringVar(&geniusUrl, "genius-url", "", "The Genius.com album URL containing the correct tracklist information")
@@ -57,6 +58,7 @@ func main() {
 	}
 	fmt.Printf("Scrape result: %d tracks found\n", len(scrapeRes))
 
+
 	entries, err := os.ReadDir(directory)
 	if err != nil {
 		log.Fatalf("Failed to read directory: %v", err)
@@ -77,7 +79,7 @@ func main() {
 	var (
 		matchedCount int
 		skippedCount int
-		errorCount   int
+		errorCount int
 	)
 
 	for index, file := range cleanFiles {
@@ -102,7 +104,7 @@ func main() {
 		fmt.Printf("\nMATCH: %s -> %s (score= %d)\n", file, bestTrack.Title, bestScore)
 		fileFullPath := filepath.Join(directory, files[index])
 		fmt.Printf("Editing tags on %s\n", fileFullPath)
-
+		
 		if dryRun {
 			log.Printf("Dry run: skipping tag edit for %s", fileFullPath)
 			matchedCount++
