@@ -5,6 +5,10 @@
 *.so
 *.dylib
 
+mp3tagger-linux
+mp3tagger-mac-arm64
+mp3tagger-mac-intel
+
 # Test binary, built with `go test -c`
 *.test
 
