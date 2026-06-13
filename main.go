@@ -4,10 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	removecommontokens "mp3tagger/removeCommonTokens"
+	"mp3tagger/cleaner"
+	"mp3tagger/compare"
 	"mp3tagger/scraper"
 	"mp3tagger/tagger"
-	tokencompare "mp3tagger/tokenCompare"
 	"os"
 	"path/filepath"
 	"strings"
@@ -17,7 +17,6 @@ type Match struct {
 	Track scraper.Track
 	Score int32
 }
-
 
 func main() {
 	var (
@@ -58,7 +57,6 @@ func main() {
 	}
 	fmt.Printf("Scrape result: %d tracks found\n", len(scrapeRes))
 
-
 	entries, err := os.ReadDir(directory)
 	if err != nil {
 		log.Fatalf("Failed to read directory: %v", err)
@@ -74,7 +72,7 @@ func main() {
 
 	fmt.Printf("Scanned %d directory entries; found %d MP3 files to process.\n", len(entries), len(files))
 
-	cleanFiles := removecommontokens.RemoveCommonTokens(files, ignoreFreqPct)
+	cleanFiles := cleaner.RemoveCommon(files, ignoreFreqPct)
 
 	var (
 		matchedCount int
@@ -87,7 +85,7 @@ func main() {
 		var bestTrack scraper.Track
 
 		for _, track := range scrapeRes {
-			score := tokencompare.TokenCompare(file, track.Title)
+			score := compare.Score(file, track.Title)
 
 			if score > bestScore {
 				bestScore = score
@@ -104,12 +102,12 @@ func main() {
 		fmt.Printf("\nMATCH: %s -> %s (score= %d)\n", file, bestTrack.Title, bestScore)
 		fileFullPath := filepath.Join(directory, files[index])
 		fmt.Printf("Editing tags on %s\n", fileFullPath)
-		
+
 		if dryRun {
 			log.Printf("Dry run: skipping tag edit for %s", fileFullPath)
 			matchedCount++
 		} else {
-			if err := tagger.Tagger(fileFullPath, bestTrack.TrackNumber, bestTrack.Title, bestTrack.AlbumArtist, bestTrack.AlbumName); err != nil {
+			if err := tagger.Execute(fileFullPath, bestTrack.TrackNumber, bestTrack.Title, bestTrack.AlbumArtist, bestTrack.AlbumName); err != nil {
 				log.Printf("Failed to edit tags on %s: %v\n", fileFullPath, err)
 				errorCount++
 			} else {

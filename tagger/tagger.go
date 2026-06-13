@@ -4,7 +4,7 @@ import (
 	"github.com/bogem/id3v2/v2"
 )
 
-func Tagger(filepath string, trackNum string, title string, artist string, album string) error {
+func Execute(filepath string, trackNum string, title string, artist string, album string) error {
 	tag, err := id3v2.Open(filepath, id3v2.Options{Parse: true})
 	if err != nil {
 		return err

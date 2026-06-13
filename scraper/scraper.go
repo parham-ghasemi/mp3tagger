@@ -11,8 +11,8 @@ import (
 
 type Track struct {
 	TrackNumber string
-	Title string
-	AlbumName string
+	Title       string
+	AlbumName   string
 	AlbumArtist string
 }
 

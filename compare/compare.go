@@ -1,4 +1,4 @@
-package tokencompare
+package compare
 
 import (
 	"strings"
@@ -29,7 +29,7 @@ func getTokenWeight(token string) float64 {
 	return 1.0
 }
 
-func TokenCompare(s1, s2 string) int {
+func Score(s1, s2 string) int {
 	s1t := strings.Fields(Normalize(s1))
 	s2t := strings.Fields(Normalize(s2))
 
