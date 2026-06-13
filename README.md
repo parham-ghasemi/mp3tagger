@@ -1,4 +1,4 @@
-# README
+# MP3Tagger
 
 `mp3tagger` is a lightweight command-line tool written in Go that automatically scrapes album tracklists from Genius.com and updates the ID3 tags (`Title`, `Artist`, `Album`, and `Track Number`) of your local MP3 files.
 
@@ -18,15 +18,43 @@ It was born out of a personal frustration: downloading albums via tools like `yt
 
 ---
 
-## 🚀 Installation & Usage
+## Installation & Quick Start
 
-### Running Locally
+No Go installation or source code compilation required! We provide pre-compiled, standalone binaries for every major operating system.
 
-Ensure you have Go installed on your system, clone the repository, and run:
+1. Head over to the [Releases](https://github.com/parham-ghasemi/mp3tagger/releases) page and download the executable file that matches your system architecture.
+2. Open your terminal or command prompt and navigate to the folder where you downloaded the file.
+3. Run the application directly by supplying your target Genius URL and the directory containing your MP3 files:
 
-```bash
-go run main.go -u <genius-url> -d <path-to-mp3-directory>
+### Windows
+
+```cmd
+.\mp3tagger-windows.exe -u <genius-album-url> -d <path-to-mp3-folder>
 ```
+
+### macOS (Apple Silicon / M-Series)
+
+```Bash
+# Give the binary permission to run, then execute
+chmod +x mp3tagger-mac-arm64
+./mp3tagger-mac-arm64 -u <genius-album-url> -d <path-to-mp3-folder>
+```
+
+### macOS (Intel Chips)
+
+```Bash
+chmod +x mp3tagger-mac-intel
+./mp3tagger-mac-intel -u <genius-album-url> -d <path-to-mp3-folder>
+```
+
+### Linux (Universal)
+
+```Bash
+chmod +x mp3tagger-linux
+./mp3tagger-linux -u <genius-album-url> -d <path-to-mp3-folder>
+```
+
+**Note for Developers:** If you prefer to run or build the project directly from source code, ensure you have Go 1.22+ installed and run `go run main.go [flags]` from the repository root.
 
 | **Long Flag**       | **Short Flag** | **Default** | **Description**                                                                       |
 | ------------------- | -------------- | ----------- | ------------------------------------------------------------------------------------- |
@@ -36,6 +64,8 @@ go run main.go -u <genius-url> -d <path-to-mp3-directory>
 | `--min-match-score` | `-s`           | `20`        | Minimum confidence score (0-100) required to automatically accept a track match.      |
 | `--dry-run`         | `-n`           | `false`     | Preview matching logic and print summary tables without modifying file tags.          |
 
+---
+
 ## How It Works
 
 The tool processes your audio library using a modular architecture split into distinct domain packages:
@@ -44,6 +74,8 @@ The tool processes your audio library using a modular architecture split into di
 2. **`cleaner`**: Preps your filenames for matching. It strips out trailing YouTube video IDs (like `[dQw4w9WgXcQ]`) and filters out repetitive text clutter across your files by building a global token-frequency map.
 3. **`compare`**: Normalizes characters and applies an intersection-over-union string matching algorithm. Tokens are passed through an internal lookup weight matrix so background terms like `official` or `pt` don't throw off the similarity indexing.
 4. **`tagger`**: Directly manipulates the underlying audio file frames using the `id3v2` binary parser, executing fast UTF-8 textual payload injection.
+
+---
 
 ## Dependencies
 
